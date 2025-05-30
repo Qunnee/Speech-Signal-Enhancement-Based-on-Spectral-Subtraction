@@ -1,0 +1,43 @@
+算法步骤与公式说明
+1.读取语音文件：
+[y, fs] = audioread('recorded_speech.wav');
+	这一步读取名为recorded_speech.wav的语音文件，y是语音信号的时域样本，fs是采样频率。
+2.添加噪声：
+noise = 0.1*randn(size(y));
+y_noisy = y + noise;
+	生成与语音信号长度相同的高斯白噪声noise，噪声的强度由系数0.1控制。然后将噪声添加到原始语音信号上，得到含噪语音信号y_noisy。
+3.计算含噪语音的傅里叶变换：
+Y_noisy = fft(y_noisy);
+	对含噪语音信号进行快速傅里叶变换（FFT），得到其频域表示Y_noisy。
+4.估计噪声功率：
+numNoiseSamples = floor(length(Y_noisy)/20);
+noise_est = Y_noisy(1:numNoiseSamples);
+noise_est_mean = mean(abs(noise_est));
+	选取频域信号的前一部分（这里是总长度的1/20）作为噪声估计样本noise_est。计算这些样本的平均幅度noise_est_mean，作为噪声功率的估计值。
+5.语音增强：
+对于频域中的每个点k：
+for k = 1:length(Y_noisy)
+    mag_Y_noisy = abs(Y_noisy(k));
+    phase_Y_noisy = angle(Y_noisy(k));
+    mag_Y_enhanced = max(mag_Y_noisy - noise_est_mean, 0);
+    Y_enhanced(k) = mag_Y_enhanced * exp(1j*phase_Y_noisy);
+end
+•计算含噪语音频域点的幅度mag_Y_noisy和相位phase_Y_noisy。
+•通过公式\text{mag}_\text{Y\_enhanced} = \max(\text{mag}_\text{Y\_noisy} - \text{noise\_est\_mean}, 0)  对幅度进行增强，即减去噪声功率估计值，并确保结果非负。
+
+•保持相位不变，将增强后的幅度与原相位结合，得到增强后的频域信号Y_enhanced。
+6.计算增强后语音的时域信号：
+y_enhanced = real(ifft(Y_enhanced));
+	对增强后的频域信号进行逆快速傅里叶变换（IFFT），得到增强后的时域语音信号y_enhanced。
+7.绘制波形和频谱图：
+•绘制原始语音、含噪语音和增强后语音的时域波形。
+•绘制含噪语音和增强后语音的时频谱。
+流程图
+flowchart TD
+    A[读取语音文件 y, fs] --> B[生成噪声并添加到语音 y_noisy]
+    B --> C[计算含噪语音的傅里叶变换 Y_noisy]
+    C --> D[估计噪声功率 noise_est_mean]
+    D --> E[语音增强生成 Y_enhanced]
+    E --> F[计算增强后语音的时域信号 y_enhanced]
+    F --> G[绘制时域波形和时频谱]
+通过以上步骤，该算法实现了对含噪语音的增强处理，并通过可视化展示了处理前后语音信号的变化
